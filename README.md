@@ -1,53 +1,58 @@
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
+# Terraform Provider for FCO
 
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://developer.hashicorp.com/terraform/plugin/framework-benefits) in the Terraform documentation for additional information._
+Manage resources on the fi-ts.io platform using Terraform.
 
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
-
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
-
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/providers-plugin-framework) platform. _Terraform Plugin Framework specific guides are titled accordingly._
-
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
-
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://developer.hashicorp.com/terraform/registry/providers/publishing) so that others can use it.
+> [!IMPORTANT]
+> This provider is in **alpha** stage. The schema, API surface, and behavior
+> are still being shaped and may change without notice. Expect breaking
+> changes and use at your own risk.
 
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.24
+- [Go](https://golang.org/doc/install) >= 1.27
 
-## Building the Provider
+## Building the provider
 
 1. Clone the repository
-1. Enter the repository directory
-1. Build the provider using the Go `install` command:
+2. Enter the repository directory
+3. Build the provider using the Go `install` command:
 
 ```shell
 go install
 ```
 
-## Adding Dependencies
+## Using the provider
 
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
+First, let's add the provider to your project:
 
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
-
-```shell
-go get github.com/author/dependency
-go mod tidy
+```terraform
+terraform {
+  required_providers {
+    fco = {
+      source = "fi-ts/fco"
+    }
+  }
+}
 ```
 
-Then commit the changes to `go.mod` and `go.sum`.
+The provider is configured with an API authentication token (a JWT), the base
+URL of the API server, the project to operate in, and the tenant login. Any of
+these may also be supplied via the `FCO_*` environment variables, in which case
+values set in the configuration take precedence.
 
-## Using the Provider
+```terraform
+provider "fco" {
+  token        = "<YOUR_TOKEN>"        # or set env FCO_TOKEN
+  base_url     = "https://api.fits.de" # or set env FCO_BASE_URL
+  project_uuid = "<PROJECT_UUID>"      # or set env FCO_PROJECT_UUID
+  tenant       = "<TENANT>"            # or set env FCO_TENANT
+}
+```
 
-Fill this in for each provider
+Now you are ready to go! :tada:
 
-## Developing the Provider
+## Developing the provider
 
 If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
 

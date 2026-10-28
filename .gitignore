@@ -3,7 +3,8 @@
 .DS_Store
 example.tf
 terraform.tfplan
-terraform.tfstate
+terraform.tfstate*
+.terraform.tfstate*
 bin/
 dist/
 modules-dev/
@@ -33,3 +34,11 @@ website/vendor
 
 # Keep windows files with windows line endings
 *.winfile eol=crlf
+
+# Build artifacts
+/terraform-provider-fco
+
+# manual debugging
+examples/**/provider.tf
+!examples/provider/provider.tf
+*.kubeconfig
