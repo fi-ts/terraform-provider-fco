@@ -11,13 +11,12 @@ import (
 // Debug enables verbose provider logging.
 var Debug bool
 
-// SessionFrom extracts the *session.Session from the provider data.
+// SessionFrom extracts the *session.Session from the provider data. A nil
+// provider data is not an error; it means the provider has not been
+// configured yet.
 func SessionFrom(providerData any) (*session.Session, diag.Diagnostic) {
 	if providerData == nil {
-		return nil, diag.NewErrorDiagnostic(
-			"Missing FCO provider data",
-			"The provider data was not set. Verify that the provider's Configure method ran successfully. This is always a provider bug.",
-		)
+		return nil, nil
 	}
 	s, ok := providerData.(*session.Session)
 	if !ok {

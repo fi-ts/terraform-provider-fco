@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	client "github.com/fi-ts/api/go/client"
+	"github.com/fi-ts/terraform-provider-fco/internal/public_cloud_vm"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 )
@@ -165,11 +166,16 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 }
 
 func (p *FCOProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		publiccloudvm.NewPublicCloudVMResource,
+	}
 }
 
 func (p *FCOProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		publiccloudvm.NewPublicCloudVMDataSource,
+		publiccloudvm.NewPublicCloudVMsDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
