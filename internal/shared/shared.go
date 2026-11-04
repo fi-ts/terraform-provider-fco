@@ -1,9 +1,12 @@
 package shared
 
 import (
+	"crypto/sha1"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 )
@@ -27,4 +30,10 @@ func SessionFrom(providerData any) (*session.Session, diag.Diagnostic) {
 		)
 	}
 	return s, nil
+}
+
+// ListID returns a stable content hash over the listed entity UUIDs, used as
+// a data source's `id` so Terraform can detect when the listed set changes.
+func ListID(uuids []string) types.String {
+	return types.StringValue(fmt.Sprintf("%x", sha1.Sum([]byte(strings.Join(uuids, ",")))))
 }
