@@ -29,6 +29,6 @@ provider "fco" {
 ### Optional
 
 - `base_url` (String) The base URL of the fits-api server. Defaults to the `FCO_BASE_URL` environment variable.
-- `project_uuid` (String) The project UUID to operate in. Defaults to the `FCO_PROJECT_UUID` environment variable.
+- `project_uuid` (String) The default project UUID to operate in. Optional: only needed by project-scoped resources. Tenant-scoped resources (e.g. `fco_project`) use `tenant` instead. Defaults to the `FCO_PROJECT_UUID` environment variable.
 - `tenant` (String) The tenant login. Defaults to the `FCO_TENANT` environment variable.
 - `token` (String, Sensitive) The API authentication token. Defaults to the `FCO_TOKEN` environment variable.

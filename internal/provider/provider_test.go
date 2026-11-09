@@ -136,6 +136,31 @@ func TestConfigure_EnvFallbackBuildsSession(t *testing.T) {
 	}
 }
 
+func TestConfigure_ProjectUUIDOptional(t *testing.T) {
+	clearFCOEnv(t)
+	t.Setenv("FCO_TOKEN", testJWT(t))
+	t.Setenv("FCO_BASE_URL", "https://api.fits.de")
+	t.Setenv("FCO_TENANT", "env-tenant")
+
+	// project_uuid is intentionally left unset: tenant-scoped resources do
+	// not require it.
+	resp := configure(t, newConfigureConfig(nil, nil, nil, nil))
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("expected no error when project_uuid is unset, got: %v", resp.Diagnostics)
+	}
+
+	s, ok := resp.ResourceData.(*session.Session)
+	if !ok {
+		t.Fatalf("expected *session.Session in ResourceData, got %T", resp.ResourceData)
+	}
+	if s.Tenant != "env-tenant" {
+		t.Errorf("expected tenant %q, got %q", "env-tenant", s.Tenant)
+	}
+	if s.Client == nil {
+		t.Error("expected a non-nil API client")
+	}
+}
+
 func TestConfigure_ConfigWinsOverEnv(t *testing.T) {
 	clearFCOEnv(t)
 	envToken := testJWT(t)

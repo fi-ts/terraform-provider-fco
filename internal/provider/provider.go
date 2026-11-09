@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	client "github.com/fi-ts/api/go/client"
+	"github.com/fi-ts/terraform-provider-fco/internal/project"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 )
@@ -52,8 +53,9 @@ func (p *FCOProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 				Optional:            true,
 			},
 			"project_uuid": schema.StringAttribute{
-				MarkdownDescription: "The project UUID to operate in. Defaults to the `FCO_PROJECT_UUID` environment variable.",
-				Optional:            true,
+				MarkdownDescription: "The default project UUID to operate in. Optional: only needed by project-scoped resources. " +
+					"Tenant-scoped resources (e.g. `fco_project`) use `tenant` instead. Defaults to the `FCO_PROJECT_UUID` environment variable.",
+				Optional: true,
 			},
 			"tenant": schema.StringAttribute{
 				MarkdownDescription: "The tenant login. Defaults to the `FCO_TENANT` environment variable.",
@@ -111,15 +113,6 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		)
 	}
 
-	if projectUUID == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("project_uuid"),
-			"Missing FCO project UUID",
-			"The provider cannot create the FCO API client as there is an empty or missing configuration value for the FCO project UUID. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the FCO_PROJECT_UUID environment variable.",
-		)
-	}
-
 	if tenant == "" {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("tenant"),
@@ -165,11 +158,16 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 }
 
 func (p *FCOProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		project.NewProjectResource,
+	}
 }
 
 func (p *FCOProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		project.NewProjectDataSource,
+		project.NewProjectsDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
