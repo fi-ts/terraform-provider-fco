@@ -42,3 +42,8 @@ website/vendor
 examples/**/provider.tf
 !examples/provider/provider.tf
 *.kubeconfig
+
+# FCO secrets & manual probe
+.token
+/token
+probe/
