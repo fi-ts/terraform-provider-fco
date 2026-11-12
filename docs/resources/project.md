@@ -20,7 +20,6 @@ The `updated_at` attribute is managed automatically by the provider and is used 
 
 ```terraform
 # Manage a project within the tenant the provider is configured with.
-# No project_uuid is required — projects are tenant scoped.
 resource "fco_project" "my_project" {
   name        = "my-project"
   description = "Managed by Terraform"

@@ -19,7 +19,7 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 }
 
 // testAccPreCheck requires the FCO_* credentials to be exported. Projects are
-// tenant scoped, so FCO_PROJECT_UUID is not required here.
+// tenant scoped.
 func testAccPreCheck(t *testing.T) {
 	t.Helper()
 	for _, key := range []string{"FCO_TOKEN", "FCO_BASE_URL", "FCO_TENANT"} {

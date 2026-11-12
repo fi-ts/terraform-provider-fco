@@ -28,7 +28,7 @@ func NewProjectResource() resource.Resource {
 
 // ProjectResource implements the fco_project resource. Projects are tenant
 // scoped: the provider operates within a tenant and creates projects under
-// that tenant, so no project_uuid is needed to manage projects.
+// that tenant.
 type ProjectResource struct {
 	session *session.Session
 }

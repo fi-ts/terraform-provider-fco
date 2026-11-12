@@ -37,18 +37,16 @@ terraform {
 ```
 
 The provider is configured with an API authentication token (a JWT), the base
-URL of the API server, and the tenant to operate in. `project_uuid` is
-optional and only needed by project-scoped resources; tenant-scoped resources
-(such as `fco_project`) use `tenant` instead. Any of these may also be supplied
-via the `FCO_*` environment variables, in which case values set in the
-configuration take precedence.
+URL of the API server, and the tenant to operate in. Projects are not part of
+the provider configuration; they are managed via the `fco_project` resource.
+Any of these may also be supplied via the `FCO_*` environment variables, in
+which case values set in the configuration take precedence.
 
 ```terraform
 provider "fco" {
-  token        = "<YOUR_TOKEN>"        # or set env FCO_TOKEN
-  base_url     = "https://api.fits.de" # or set env FCO_BASE_URL
-  project_uuid = "<PROJECT_UUID>"      # or set env FCO_PROJECT_UUID (optional)
-  tenant       = "<TENANT>"            # or set env FCO_TENANT
+  token    = "<YOUR_TOKEN>"        # or set env FCO_TOKEN
+  base_url = "https://api.fits.de" # or set env FCO_BASE_URL
+  tenant   = "<TENANT>"            # or set env FCO_TENANT
 }
 ```
 

@@ -16,10 +16,9 @@ All provider defaults can be derived from the `FCO_*` environment variables or s
 
 ```terraform
 provider "fco" {
-  token        = "<YOUR_TOKEN>"     # or set env FCO_TOKEN
-  base_url     = "https://fi-ts.io" # or set env FCO_BASE_URL
-  project_uuid = "<PROJECT_UUID>"   # or set env FCO_PROJECT_UUID
-  tenant       = "<TENANT>"         # or set env FCO_TENANT
+  token    = "<YOUR_TOKEN>"     # or set env FCO_TOKEN
+  base_url = "https://fi-ts.io" # or set env FCO_BASE_URL
+  tenant   = "<TENANT>"         # or set env FCO_TENANT
 }
 ```
 
@@ -29,6 +28,5 @@ provider "fco" {
 ### Optional
 
 - `base_url` (String) The base URL of the fits-api server. Defaults to the `FCO_BASE_URL` environment variable.
-- `project_uuid` (String) The default project UUID to operate in. Optional: only needed by project-scoped resources. Tenant-scoped resources (e.g. `fco_project`) use `tenant` instead. Defaults to the `FCO_PROJECT_UUID` environment variable.
 - `tenant` (String) The tenant login. Defaults to the `FCO_TENANT` environment variable.
 - `token` (String, Sensitive) The API authentication token. Defaults to the `FCO_TOKEN` environment variable.

@@ -26,10 +26,9 @@ type FCOProvider struct {
 }
 
 type FCOProviderModel struct {
-	Token       types.String `tfsdk:"token"`
-	BaseURL     types.String `tfsdk:"base_url"`
-	ProjectUUID types.String `tfsdk:"project_uuid"`
-	Tenant      types.String `tfsdk:"tenant"`
+	Token   types.String `tfsdk:"token"`
+	BaseURL types.String `tfsdk:"base_url"`
+	Tenant  types.String `tfsdk:"tenant"`
 }
 
 func (p *FCOProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -51,11 +50,6 @@ func (p *FCOProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 			"base_url": schema.StringAttribute{
 				MarkdownDescription: "The base URL of the fits-api server. Defaults to the `FCO_BASE_URL` environment variable.",
 				Optional:            true,
-			},
-			"project_uuid": schema.StringAttribute{
-				MarkdownDescription: "The default project UUID to operate in. Optional: only needed by project-scoped resources. " +
-					"Tenant-scoped resources (e.g. `fco_project`) use `tenant` instead. Defaults to the `FCO_PROJECT_UUID` environment variable.",
-				Optional: true,
 			},
 			"tenant": schema.StringAttribute{
 				MarkdownDescription: "The tenant login. Defaults to the `FCO_TENANT` environment variable.",
@@ -83,11 +77,6 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	baseURL := os.Getenv("FCO_BASE_URL")
 	if !data.BaseURL.IsNull() {
 		baseURL = data.BaseURL.ValueString()
-	}
-
-	projectUUID := os.Getenv("FCO_PROJECT_UUID")
-	if !data.ProjectUUID.IsNull() {
-		projectUUID = data.ProjectUUID.ValueString()
 	}
 
 	tenant := os.Getenv("FCO_TENANT")
@@ -148,9 +137,8 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	}
 
 	sess := &session.Session{
-		Client:      apiClient,
-		ProjectUUID: projectUUID,
-		Tenant:      tenant,
+		Client: apiClient,
+		Tenant: tenant,
 	}
 
 	resp.DataSourceData = sess
