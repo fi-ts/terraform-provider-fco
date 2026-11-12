@@ -58,6 +58,56 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 
 To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
+### Using your local build
+
+The provider is not published to the public registry, so Terraform cannot
+download it. To test a locally built provider, use a
+[development override](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers)
+in your Terraform CLI configuration.
+
+1. Build and install the provider binary:
+
+   ```shell
+   make install
+   ```
+
+2. Find where `go install` placed the binary:
+
+   ```shell
+   echo "$(go env GOPATH)/bin"
+   ```
+
+3. Create or edit `~/.terraformrc` to point the provider at that directory
+   (replace the path with the output from the previous step):
+
+   ```hcl
+   provider_installation {
+     dev_overrides {
+       "fi-ts/fco" = "/Users/<you>/go/bin"
+     }
+     # For all other providers, install directly from their origin registry.
+     direct {}
+   }
+   ```
+
+4. Run Terraform commands as usual against your configuration:
+
+   ```shell
+   terraform plan
+   terraform apply
+   ```
+
+> [!IMPORTANT]
+> Do **not** run `terraform init` when a development override is in effect.
+> `init` tries to download the provider from the public registry, which fails
+> because it is not published there. With a dev override, there is nothing to
+> download: Terraform uses your local binary directly. Every command will print
+> a "Provider development overrides are in effect" warning, which confirms the
+> override is active.
+
+To return to the normal workflow, remove the `dev_overrides` block from
+`~/.terraformrc`.
+
 To generate or update documentation, run `make generate`.
 
 In order to run the full suite of Acceptance tests, run `make testacc`.
