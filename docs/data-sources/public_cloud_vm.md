@@ -15,7 +15,8 @@ Looks up a public cloud VM by its UUID.
 ```terraform
 # Look up a public cloud VM by its UUID.
 data "fco_public_cloud_vm" "by_uuid" {
-  uuid = fco_public_cloud_vm.my_vm.uuid
+  project_uuid = fco_public_cloud_vm.my_vm.project_uuid
+  uuid         = fco_public_cloud_vm.my_vm.uuid
 }
 ```
 
@@ -24,13 +25,13 @@ data "fco_public_cloud_vm" "by_uuid" {
 
 ### Required
 
+- `project_uuid` (String) The UUID of the project the public cloud VM belongs to.
 - `uuid` (String) The UUID of the public cloud VM to look up.
 
 ### Read-Only
 
 - `labels` (Map of String) A set of key/value label pairs assigned to the public cloud VM.
 - `name` (String) The name of the public cloud VM.
-- `project_uuid` (String) The UUID of the project the public cloud VM belongs to.
 - `size` (String) The size of the public cloud VM.
 - `status_info` (String) Free-text details about the current status of the public cloud VM.
 - `status_operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.

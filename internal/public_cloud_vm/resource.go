@@ -3,6 +3,7 @@ package publiccloudvm
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -53,7 +54,7 @@ func (*PublicCloudVMResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"Only `name` and `size` can be changed after creation. `size` can only be upgraded " +
 			"(the new size must be greater than or equal to the current size); downgrades are rejected.\n\n" +
 			"The `updated_at` attribute is managed automatically by the provider and is used for " +
-			"optimistic locking (CLIENT strategy). Can be imported by UUID.",
+			"optimistic locking (CLIENT strategy). Can be imported as `<project_uuid>/<uuid>`.",
 		Attributes: publicCloudVMResourceAttributes(),
 	}
 }
@@ -87,7 +88,7 @@ func (r *PublicCloudVMResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	createReq := &pcvmv1.PublicCloudVMServiceCreateRequest{
-		ProjectUuid: r.session.ProjectUUID,
+		ProjectUuid: plan.ProjectUUID.ValueString(),
 		Name:        plan.Name.ValueString(),
 		Labels:      labelsToAPI(plan.Labels),
 		Size:        size,
@@ -101,7 +102,7 @@ func (r *PublicCloudVMResource) Create(ctx context.Context, req resource.CreateR
 
 	// Persist the VM once it is active: the create response only carries the
 	// transient "creating" status.
-	activeVM, err := r.waitForActive(ctx, created.Vm.GetUuid())
+	activeVM, err := r.waitForActive(ctx, plan.ProjectUUID.ValueString(), created.Vm.GetUuid())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create public cloud VM", err.Error())
 		return
@@ -118,7 +119,7 @@ func (r *PublicCloudVMResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	vm, err := r.getVM(ctx, state.UUID.ValueString())
+	vm, err := r.getVM(ctx, state.ProjectUUID.ValueString(), state.UUID.ValueString())
 	if err != nil {
 		if isNotFound(err) {
 			tflog.Debug(ctx, "public cloud VM not found, removing from state", map[string]any{
@@ -159,7 +160,7 @@ func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateR
 
 	reqMsg := &pcvmv1.PublicCloudVMServiceUpdateRequest{
 		Uuid:        state.UUID.ValueString(),
-		ProjectUuid: r.session.ProjectUUID,
+		ProjectUuid: state.ProjectUUID.ValueString(),
 		UpdateMeta: &apiv1.UpdateMeta{
 			UpdatedAt:       updateMeta,
 			LockingStrategy: apiv1.OptimisticLockingStrategy_OPTIMISTIC_LOCKING_STRATEGY_CLIENT,
@@ -213,7 +214,7 @@ func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateR
 
 	// Persist the VM once it is active: the update response only carries the
 	// transient "updating" status.
-	activeVM, err := r.waitForActive(ctx, updated.Vm.GetUuid())
+	activeVM, err := r.waitForActive(ctx, state.ProjectUUID.ValueString(), updated.Vm.GetUuid())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update public cloud VM", err.Error())
 		return
@@ -232,7 +233,7 @@ func (r *PublicCloudVMResource) Delete(ctx context.Context, req resource.DeleteR
 
 	_, err := r.session.Client.Apipcvmv1().PublicCloudVM().Delete(ctx, &pcvmv1.PublicCloudVMServiceDeleteRequest{
 		Uuid:        state.UUID.ValueString(),
-		ProjectUuid: r.session.ProjectUUID,
+		ProjectUuid: state.ProjectUUID.ValueString(),
 	})
 	// A NotFound is expected on an idempotent second delete and is not an error.
 	if err != nil && !isNotFound(err) {
@@ -242,14 +243,23 @@ func (r *PublicCloudVMResource) Delete(ctx context.Context, req resource.DeleteR
 
 // ImportState implements resource.ResourceWithImportState.
 func (r *PublicCloudVMResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
+	projectUUID, uuid, ok := strings.Cut(req.ID, "/")
+	if !ok || projectUUID == "" || uuid == "" {
+		resp.Diagnostics.AddError(
+			"Invalid import ID",
+			fmt.Sprintf("Expected import ID in the format <project_uuid>/<uuid>, got %q.", req.ID),
+		)
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_uuid"), projectUUID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("uuid"), uuid)...)
 }
 
-// getVM fetches a VM by UUID in the session's project.
-func (r *PublicCloudVMResource) getVM(ctx context.Context, uuid string) (*pcvmv1.PublicCloudVM, error) {
+// getVM fetches a VM by UUID in the given project.
+func (r *PublicCloudVMResource) getVM(ctx context.Context, projectUUID, uuid string) (*pcvmv1.PublicCloudVM, error) {
 	resp, err := r.session.Client.Apipcvmv1().PublicCloudVM().Get(ctx, &pcvmv1.PublicCloudVMServiceGetRequest{
 		Uuid:        uuid,
-		ProjectUuid: r.session.ProjectUUID,
+		ProjectUuid: projectUUID,
 	})
 	if err != nil {
 		return nil, err
@@ -261,13 +271,13 @@ func (r *PublicCloudVMResource) getVM(ctx context.Context, uuid string) (*pcvmv1
 // an error is observed, or the deadline is reached. It returns the active VM
 // so callers can persist the terminal status and includes the last
 // status.info in any returned error.
-func (r *PublicCloudVMResource) waitForActive(ctx context.Context, uuid string) (*pcvmv1.PublicCloudVM, error) {
+func (r *PublicCloudVMResource) waitForActive(ctx context.Context, projectUUID, uuid string) (*pcvmv1.PublicCloudVM, error) {
 	ctx, cancel := context.WithTimeout(ctx, pollTimeout)
 	defer cancel()
 
 	lastInfo := ""
 	for {
-		vm, err := r.getVM(ctx, uuid)
+		vm, err := r.getVM(ctx, projectUUID, uuid)
 		if err != nil {
 			return nil, fmt.Errorf("polling public cloud VM %s: %w", uuid, err)
 		}

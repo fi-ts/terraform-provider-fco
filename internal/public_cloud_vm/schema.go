@@ -6,6 +6,8 @@ package publiccloudvm
 import (
 	dataschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -47,8 +49,11 @@ func publicCloudVMResourceAttributes() map[string]schema.Attribute {
 			MarkdownDescription: vmAttributeDescriptions["tenant"],
 		},
 		"project_uuid": schema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["project_uuid"],
+			Required:            true,
+			MarkdownDescription: vmAttributeDescriptions["project_uuid"] + " Changing it destroys and recreates the public cloud VM.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"status_state": schema.StringAttribute{
 			Computed:            true,
@@ -122,8 +127,8 @@ func publicCloudVMDataSourceAttributes() map[string]dataschema.Attribute {
 		MarkdownDescription: vmAttributeDescriptions["tenant"],
 	}
 	attrs["project_uuid"] = dataschema.StringAttribute{
-		Computed:            true,
-		MarkdownDescription: vmAttributeDescriptions["project_uuid"],
+		Required:            true,
+		MarkdownDescription: "The UUID of the project the public cloud VM belongs to.",
 	}
 	attrs["updated_at"] = dataschema.StringAttribute{
 		Computed:            true,
@@ -138,6 +143,10 @@ func publicCloudVMListDataSourceAttributes() map[string]dataschema.Attribute {
 		"id": dataschema.StringAttribute{
 			Computed:            true,
 			MarkdownDescription: "A content hash identifying the current set of listed public cloud VMs.",
+		},
+		"project_uuid": dataschema.StringAttribute{
+			Required:            true,
+			MarkdownDescription: "The UUID of the project to list public cloud VMs from.",
 		},
 		"name": dataschema.StringAttribute{
 			Optional:            true,

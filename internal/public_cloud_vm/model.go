@@ -30,8 +30,9 @@ type publicCloudVMModel struct {
 // listPublicCloudVMModel describes the Terraform state for the
 // fco_public_cloud_vms data source.
 type listPublicCloudVMModel struct {
-	ID     types.String        `tfsdk:"id"`
-	Name   types.String        `tfsdk:"name"`
-	Labels types.Map           `tfsdk:"labels"`
-	VMs    []publicCloudVMView `tfsdk:"vms"`
+	ID          types.String        `tfsdk:"id"`
+	ProjectUUID types.String        `tfsdk:"project_uuid"`
+	Name        types.String        `tfsdk:"name"`
+	Labels      types.Map           `tfsdk:"labels"`
+	VMs         []publicCloudVMView `tfsdk:"vms"`
 }

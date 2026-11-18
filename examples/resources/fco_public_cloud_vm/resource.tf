@@ -1,6 +1,12 @@
+resource "fco_project" "my_project" {
+  name        = "my_project"
+  description = "Project for my VMs"
+}
+
 resource "fco_public_cloud_vm" "my_vm" {
-  name = "my_vm"
-  size = "small"
+  project_uuid = fco_project.my_project.uuid
+  name         = "my_vm"
+  size         = "small"
 
   labels = {
     env  = "dev"

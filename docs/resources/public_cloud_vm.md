@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages a public cloud VM on the fi-ts.io platform.
   Only name and size can be changed after creation. size can only be upgraded (the new size must be greater than or equal to the current size); downgrades are rejected.
-  The updated_at attribute is managed automatically by the provider and is used for optimistic locking (CLIENT strategy). Can be imported by UUID.
+  The updated_at attribute is managed automatically by the provider and is used for optimistic locking (CLIENT strategy). Can be imported as <project_uuid>/<uuid>.
 ---
 
 # fco_public_cloud_vm (Resource)
@@ -14,14 +14,20 @@ Manages a public cloud VM on the fi-ts.io platform.
 
 Only `name` and `size` can be changed after creation. `size` can only be upgraded (the new size must be greater than or equal to the current size); downgrades are rejected.
 
-The `updated_at` attribute is managed automatically by the provider and is used for optimistic locking (CLIENT strategy). Can be imported by UUID.
+The `updated_at` attribute is managed automatically by the provider and is used for optimistic locking (CLIENT strategy). Can be imported as `<project_uuid>/<uuid>`.
 
 ## Example Usage
 
 ```terraform
+resource "fco_project" "my_project" {
+  name        = "my_project"
+  description = "Project for my VMs"
+}
+
 resource "fco_public_cloud_vm" "my_vm" {
-  name = "my_vm"
-  size = "small"
+  project_uuid = fco_project.my_project.uuid
+  name         = "my_vm"
+  size         = "small"
 
   labels = {
     env  = "dev"
@@ -44,6 +50,7 @@ output "vm_status" {
 ### Required
 
 - `name` (String) The name of the public cloud VM. Must be between 2 and 128 characters.
+- `project_uuid` (String) The UUID of the project the public cloud VM belongs to. Changing it destroys and recreates the public cloud VM.
 - `size` (String) The size of the public cloud VM. Must be one of `small`, `medium` or `large`. Only upgrades (new size >= current size) are allowed; downgrades are rejected.
 
 ### Optional
@@ -52,7 +59,6 @@ output "vm_status" {
 
 ### Read-Only
 
-- `project_uuid` (String) The UUID of the project the public cloud VM belongs to.
 - `status_info` (String) Free-text details about the current status of the public cloud VM.
 - `status_operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.
 - `status_state` (String) The health state of the public cloud VM: `healthy`, `warning` or `error`.

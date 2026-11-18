@@ -21,7 +21,7 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 // testAccPreCheck requires the FCO_* credentials to be exported.
 func testAccPreCheck(t *testing.T) {
 	t.Helper()
-	for _, key := range []string{"FCO_TOKEN", "FCO_BASE_URL", "FCO_PROJECT_UUID", "FCO_TENANT"} {
+	for _, key := range []string{"FCO_TOKEN", "FCO_BASE_URL", "FCO_TENANT"} {
 		if os.Getenv(key) == "" {
 			t.Fatalf("environment variable %s must be set for acceptance tests", key)
 		}
@@ -98,7 +98,13 @@ func TestAccPublicCloudVM(t *testing.T) {
 func testAccConfig(name, size string, labels map[string]string) string {
 	return testAccProviderConfig() +
 		`
+resource "fco_project" "test" {
+  name        = "` + name + `-project"
+  description = "acceptance test project"
+}
+
 resource "fco_public_cloud_vm" "test" {
+  project_uuid = fco_project.test.uuid
   name = "` + name + `"
   size = "` + size + `"
 ` + labelsHCL(labels) + `
@@ -110,10 +116,12 @@ resource "fco_public_cloud_vm" "test" {
 func testAccDataSources(name string) string {
 	return `
 data "fco_public_cloud_vm" "by_uuid" {
-  uuid = fco_public_cloud_vm.test.uuid
+  project_uuid = fco_project.test.uuid
+  uuid         = fco_public_cloud_vm.test.uuid
 }
 
 data "fco_public_cloud_vms" "by_name" {
+  project_uuid = fco_project.test.uuid
   name = "` + name + `"
 }
 `
@@ -137,13 +145,15 @@ func testAccProviderConfig() string {
 	return ""
 }
 
-// testAccPublicCloudVMImportID reads the `uuid` from prior state and uses it
-// as the import identifier; the resource has no `id` attribute.
+// testAccPublicCloudVMImportID builds the `<project_uuid>/<uuid>` import
+// identifier from prior state; the resource has no `id` attribute.
 func testAccPublicCloudVMImportID(s *terraform.State) (string, error) {
 	for _, m := range s.Modules {
 		if r, ok := m.Resources["fco_public_cloud_vm.test"]; ok && r.Primary != nil {
-			if uuid, ok := r.Primary.Attributes["uuid"]; ok {
-				return uuid, nil
+			uuid, okU := r.Primary.Attributes["uuid"]
+			project, okP := r.Primary.Attributes["project_uuid"]
+			if okU && okP {
+				return project + "/" + uuid, nil
 			}
 		}
 	}

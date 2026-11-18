@@ -69,7 +69,7 @@ func (d *PublicCloudVMDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	vm, err := d.getVM(ctx, data.UUID.ValueString())
+	vm, err := d.getVM(ctx, data.ProjectUUID.ValueString(), data.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read public cloud VM", err.Error())
 		return
@@ -81,7 +81,6 @@ func (d *PublicCloudVMDataSource) Read(ctx context.Context, req datasource.ReadR
 	data.Size = model.Size
 	data.Labels = model.Labels
 	data.Tenant = model.Tenant
-	data.ProjectUUID = model.ProjectUUID
 	data.StatusState = model.StatusState
 	data.StatusOperation = model.StatusOperation
 	data.StatusInfo = model.StatusInfo
@@ -92,10 +91,10 @@ func (d *PublicCloudVMDataSource) Read(ctx context.Context, req datasource.ReadR
 }
 
 // getVM fetches a single public cloud VM by its UUID.
-func (d *PublicCloudVMDataSource) getVM(ctx context.Context, uuid string) (*pcvmv1.PublicCloudVM, error) {
+func (d *PublicCloudVMDataSource) getVM(ctx context.Context, projectUUID, uuid string) (*pcvmv1.PublicCloudVM, error) {
 	r, err := d.session.Client.Apipcvmv1().PublicCloudVM().Get(ctx, &pcvmv1.PublicCloudVMServiceGetRequest{
 		Uuid:        uuid,
-		ProjectUuid: d.session.ProjectUUID,
+		ProjectUuid: projectUUID,
 	})
 	if err != nil {
 		return nil, err
@@ -157,7 +156,7 @@ func (d *PublicCloudVMsDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	r, err := d.session.Client.Apipcvmv1().PublicCloudVM().List(ctx, &pcvmv1.PublicCloudVMServiceListRequest{
-		ProjectUuid: d.session.ProjectUUID,
+		ProjectUuid: data.ProjectUUID.ValueString(),
 		Query:       query,
 	})
 	if err != nil {
