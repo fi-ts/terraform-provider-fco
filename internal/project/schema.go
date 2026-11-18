@@ -29,7 +29,7 @@ func projectResourceAttributes() map[string]schema.Attribute {
 			},
 		},
 		"description": schema.StringAttribute{
-			Optional:            true,
+			Required:            true,
 			MarkdownDescription: projectAttributeDescriptions["description"],
 		},
 		"labels": schema.MapAttribute{

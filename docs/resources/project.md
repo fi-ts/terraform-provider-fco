@@ -39,11 +39,11 @@ output "project_uuid" {
 
 ### Required
 
+- `description` (String) A free-text description of the project.
 - `name` (String) The name of the project.The name is immutable; changing it destroys and recreates the project.
 
 ### Optional
 
-- `description` (String) A free-text description of the project.
 - `labels` (Map of String) A set of key/value label pairs assigned to the project.
 
 ### Read-Only
