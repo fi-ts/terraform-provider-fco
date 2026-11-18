@@ -71,20 +71,6 @@ func TestLabelsDelta(t *testing.T) {
 	}
 }
 
-func TestAvatarURLFromAPI(t *testing.T) {
-	if got := avatarURLFromAPI(nil); !got.IsNull() {
-		t.Errorf("expected null, got %q", got.ValueString())
-	}
-	empty := ""
-	if got := avatarURLFromAPI(&empty); !got.IsNull() {
-		t.Errorf("expected null, got %q", got.ValueString())
-	}
-	url := "https://example.com/a.png"
-	if got := avatarURLFromAPI(&url); got.ValueString() != url {
-		t.Errorf("expected %q, got %q", url, got.ValueString())
-	}
-}
-
 func TestParseUpdatedAt(t *testing.T) {
 	if _, err := parseUpdatedAt(""); err == nil {
 		t.Error("expected an error for an empty timestamp")
@@ -120,9 +106,6 @@ func TestProjectViewFromAPI(t *testing.T) {
 	}
 	if got.Tenant.ValueString() != "abc" {
 		t.Errorf("unexpected tenant: %q", got.Tenant.ValueString())
-	}
-	if !got.AvatarURL.IsNull() {
-		t.Errorf("expected null avatar_url, got %q", got.AvatarURL.ValueString())
 	}
 	if got.Labels.IsNull() == false {
 		t.Errorf("expected null labels, got %v", got.Labels)

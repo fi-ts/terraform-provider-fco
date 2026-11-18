@@ -12,15 +12,3 @@ resource "fco_project" "my_project" {
 output "project_uuid" {
   value = fco_project.my_project.uuid
 }
-
-# Referencing the same project again via a data source.
-data "fco_project" "my_project" {
-  uuid = fco_project.my_project.uuid
-}
-
-# List the projects of the current tenant, filtered by name.
-data "fco_projects" "dev" {
-  labels = {
-    env = "dev"
-  }
-}

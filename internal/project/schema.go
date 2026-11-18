@@ -12,9 +12,8 @@ import (
 // attributes described identically across the resource and data sources;
 // surface-specific attributes are described inline at each usage site.
 var projectAttributeDescriptions = map[string]string{
-	"name":        "The name of the project. Must be between 2 and 128 characters and unique per tenant. The name is immutable; changing it destroys and recreates the project.",
-	"description": "A free-text description of the project. Must be shorter than 256 characters.",
-	"avatar_url":  "The URL of the project avatar image.",
+	"name":        "The name of the project.The name is immutable; changing it destroys and recreates the project.",
+	"description": "A free-text description of the project.",
 	"labels":      "A set of key/value label pairs assigned to the project.",
 	"tenant":      "The tenant the project belongs to.",
 	"created_at":  "The timestamp (RFC 3339) when the project was created.",
@@ -32,10 +31,6 @@ func projectResourceAttributes() map[string]schema.Attribute {
 		"description": schema.StringAttribute{
 			Optional:            true,
 			MarkdownDescription: projectAttributeDescriptions["description"],
-		},
-		"avatar_url": schema.StringAttribute{
-			Optional:            true,
-			MarkdownDescription: projectAttributeDescriptions["avatar_url"],
 		},
 		"labels": schema.MapAttribute{
 			Optional:            true,
@@ -78,10 +73,6 @@ func projectViewAttributes() map[string]dataschema.Attribute {
 		"description": dataschema.StringAttribute{
 			Computed:            true,
 			MarkdownDescription: projectAttributeDescriptions["description"],
-		},
-		"avatar_url": dataschema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: projectAttributeDescriptions["avatar_url"],
 		},
 		"labels": dataschema.MapAttribute{
 			Computed:            true,

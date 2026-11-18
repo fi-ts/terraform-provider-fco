@@ -83,7 +83,6 @@ func (d *ProjectDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.UUID = model.UUID
 	data.Name = model.Name
 	data.Description = model.Description
-	data.AvatarURL = model.AvatarURL
 	data.Labels = model.Labels
 	data.Tenant = model.Tenant
 	data.CreatedAt = model.CreatedAt

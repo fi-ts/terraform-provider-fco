@@ -14,7 +14,6 @@ type projectView struct {
 	UUID        types.String `tfsdk:"uuid"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	AvatarURL   types.String `tfsdk:"avatar_url"`
 	Labels      types.Map    `tfsdk:"labels"`
 	Tenant      types.String `tfsdk:"tenant"`
 	CreatedAt   types.String `tfsdk:"created_at"`

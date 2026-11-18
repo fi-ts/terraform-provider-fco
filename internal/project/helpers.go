@@ -114,23 +114,12 @@ func parseUpdatedAt(s string) (*timestamppb.Timestamp, error) {
 	return timestamppb.New(t), nil
 }
 
-// avatarURLFromAPI maps the API's optional avatar_url (possibly nil or empty)
-// to a Terraform string. An absent/empty value maps to a null string so that
-// omitting the attribute in configuration does not produce a spurious diff.
-func avatarURLFromAPI(s *string) types.String {
-	if s == nil || *s == "" {
-		return types.StringNull()
-	}
-	return types.StringValue(*s)
-}
-
 // projectViewFromAPI maps an API project to its shared read-only view.
 func projectViewFromAPI(p *apiv1.Project) projectView {
 	return projectView{
 		UUID:        types.StringValue(p.GetUuid()),
 		Name:        types.StringValue(p.GetName()),
 		Description: types.StringValue(p.GetDescription()),
-		AvatarURL:   avatarURLFromAPI(p.AvatarUrl),
 		Labels:      labelsFromAPI(p.GetMeta().GetLabels()),
 		Tenant:      types.StringValue(p.GetTenant()),
 		CreatedAt:   types.StringValue(timestampFromAPI(p.GetMeta().GetCreatedAt())),

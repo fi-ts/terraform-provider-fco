@@ -32,10 +32,9 @@ output "project" {
 
 ### Read-Only
 
-- `avatar_url` (String) The URL of the project avatar image.
 - `created_at` (String) The timestamp (RFC 3339) when the project was created.
-- `description` (String) A free-text description of the project. Must be shorter than 256 characters.
+- `description` (String) A free-text description of the project.
 - `labels` (Map of String) A set of key/value label pairs assigned to the project.
-- `name` (String) The name of the project. Must be between 2 and 128 characters and unique per tenant. The name is immutable; changing it destroys and recreates the project.
+- `name` (String) The name of the project.The name is immutable; changing it destroys and recreates the project.
 - `tenant` (String) The tenant the project belongs to.
 - `updated_at` (String) Server-side last-modified timestamp (RFC 3339).

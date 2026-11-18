@@ -41,12 +41,10 @@ func (*ProjectResource) Metadata(_ context.Context, req resource.MetadataRequest
 // Schema implements resource.Resource.
 func (*ProjectResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a project on the fi-ts.io platform.\n\n" +
-			"Projects belong to the tenant the provider is configured with, so multiple projects can be " +
-			"managed within a single provider block.\n\n" +
-			"The `updated_at` attribute is managed automatically by the provider and is used for " +
-			"optimistic locking (CLIENT strategy, falling back to SERVER for freshly created " +
-			"projects). Can be imported by UUID.",
+		MarkdownDescription: "Manages a project on the fits.cloud platform.\n\n" +
+			"Projects belong to the tenant the provider is configured with.  " +
+			"Use them to group resources and permissions.\n " +
+			"Can be imported by UUID.",
 		Attributes: projectResourceAttributes(),
 	}
 }
@@ -129,14 +127,7 @@ func (r *ProjectResource) Update(ctx context.Context, req resource.UpdateRequest
 	reqMsg := &apiv1.ProjectServiceUpdateRequest{
 		Project: state.UUID.ValueString(),
 	}
-	// The server always requires a non-nil UpdateMeta. The locking strategy
-	// depends on whether we have a usable updated_at timestamp:
-	//   - CLIENT (the default, strictest): the client supplies the timestamp
-	//     it last saw; the server rejects the update if the entity changed
-	//     since (stale-state protection). Requires UpdatedAt to be set.
-	//   - SERVER: the server manages the lock; UpdatedAt may be omitted. This
-	//     is the fallback for freshly-created/seeded projects that have no
-	//     updated_at yet (only created_at).
+
 	lockingStrategy := apiv1.OptimisticLockingStrategy_OPTIMISTIC_LOCKING_STRATEGY_SERVER
 	var updatedAt *timestamppb.Timestamp
 	if state.UpdatedAt.ValueString() != "" {
@@ -156,16 +147,12 @@ func (r *ProjectResource) Update(ctx context.Context, req resource.UpdateRequest
 		LockingStrategy: lockingStrategy,
 	}
 
-	// Only `description`, `avatar_url` and `labels` are mutable. `name` is
+	// Only `description` and `labels` are mutable. `name` is
 	// immutable at the API level and is guarded by the RequiresReplace plan
 	// modifier, so it never reaches the Update operation.
 	if !plan.Description.IsUnknown() && plan.Description.ValueString() != state.Description.ValueString() {
 		description := plan.Description.ValueString()
 		reqMsg.Description = &description
-	}
-	if !plan.AvatarURL.IsUnknown() && plan.AvatarURL.ValueString() != state.AvatarURL.ValueString() {
-		avatarURL := plan.AvatarURL.ValueString()
-		reqMsg.AvatarUrl = &avatarURL
 	}
 	if delta := labelsDelta(state.Labels, plan.Labels); delta != nil {
 		reqMsg.Labels = delta
