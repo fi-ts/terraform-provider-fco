@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	client "github.com/fi-ts/api/go/client"
+	"github.com/fi-ts/terraform-provider-fco/internal/pcvm"
 	"github.com/fi-ts/terraform-provider-fco/internal/project"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
@@ -38,7 +39,7 @@ func (p *FCOProvider) Metadata(_ context.Context, _ provider.MetadataRequest, re
 
 func (p *FCOProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The `FCO` provider manages resources on the fi-ts.io platform.\n\n" +
+		MarkdownDescription: "The `FCO` provider manages resources on the fits.cloud platform.\n\n" +
 			"All provider defaults can be derived from the `FCO_*` environment variables or set in the Terraform provider configuration. " +
 			"Values set in the configuration take precedence over environment variables.",
 		Attributes: map[string]schema.Attribute{
@@ -148,6 +149,7 @@ func (p *FCOProvider) Configure(ctx context.Context, req provider.ConfigureReque
 func (p *FCOProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		project.NewProjectResource,
+		pcvm.NewPublicCloudVMResource,
 	}
 }
 
@@ -155,6 +157,8 @@ func (p *FCOProvider) DataSources(_ context.Context) []func() datasource.DataSou
 	return []func() datasource.DataSource{
 		project.NewProjectDataSource,
 		project.NewProjectsDataSource,
+		pcvm.NewPublicCloudVMDataSource,
+		pcvm.NewPublicCloudVMsDataSource,
 	}
 }
 
