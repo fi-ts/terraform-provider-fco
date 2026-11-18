@@ -38,6 +38,10 @@ website/vendor
 # Build artifacts
 /terraform-provider-fco
 
+# Live credentials — never commit
+.token
+probe
+
 # manual debugging
 examples/**/provider.tf
 !examples/provider/provider.tf

@@ -37,18 +37,23 @@ terraform {
 ```
 
 The provider is configured with an API authentication token (a JWT), the base
-URL of the API server, the project to operate in, and the tenant login. Any of
-these may also be supplied via the `FCO_*` environment variables, in which case
-values set in the configuration take precedence.
+URL of the API server, and the tenant to operate in. Projects are not part of
+the provider configuration; they are managed via the `fco_project` resource.
+URL of the API server, and the tenant to operate in.
 
 ```terraform
 provider "fco" {
-  token        = "<YOUR_TOKEN>"        # or set env FCO_TOKEN
-  base_url     = "https://api.fits.de" # or set env FCO_BASE_URL
-  project_uuid = "<PROJECT_UUID>"      # or set env FCO_PROJECT_UUID
-  tenant       = "<TENANT>"            # or set env FCO_TENANT
+  token    = "<YOUR_TOKEN>"        # or set env FCO_TOKEN
+  base_url = "https://api.fits.de" # or set env FCO_BASE_URL
+  tenant   = "<TENANT>"            # or set env FCO_TENANT
 }
 ```
+
+## Managed resources
+
+- `fco_project` — a project within the tenant.
+- `fco_project` (data source) — look up a project by UUID.
+- `fco_projects` (data source) — list the projects of the tenant.
 
 Now you are ready to go! :tada:
 
