@@ -1,9 +1,10 @@
-// Package publiccloudvm implements the fco_public_cloud_vm resource and the
+// Package pcvm implements the fco_public_cloud_vm resource and the
 // fco_public_cloud_vm / fco_public_cloud_vms data sources on top of the
 // fits.api.pcvm.v1.PublicCloudVMService.
-package publiccloudvm
+package pcvm
 
 import (
+	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 	dataschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -15,19 +16,23 @@ import (
 // attributes described identically across the resource and data sources;
 // surface-specific attributes are described inline at each usage site.
 var vmAttributeDescriptions = map[string]string{
-	"labels":           "A set of key/value label pairs assigned to the public cloud VM.",
-	"tenant":           "The tenant the public cloud VM belongs to.",
-	"project_uuid":     "The UUID of the project the public cloud VM belongs to.",
-	"status_state":     "The health state of the public cloud VM: `healthy`, `warning` or `error`.",
-	"status_operation": "The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.",
-	"status_info":      "Free-text details about the current status of the public cloud VM.",
+	"tenant":       "The tenant the public cloud VM belongs to.",
+	"project_uuid": "The UUID of the project the public cloud VM belongs to.",
+	"status":       "The status of the public cloud VM.",
+}
+
+// statusDescriptions holds the descriptions of the nested status attributes.
+var statusDescriptions = map[string]string{
+	"state":     "The health state of the public cloud VM: `healthy`, `warning` or `error`.",
+	"operation": "The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.",
+	"info":      "Free-text details about the current status of the public cloud VM.",
 }
 
 func publicCloudVMResourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"name": schema.StringAttribute{
 			Required:            true,
-			MarkdownDescription: "The name of the public cloud VM. Must be between 2 and 128 characters.",
+			MarkdownDescription: "The name of the public cloud VM.",
 		},
 		"size": schema.StringAttribute{
 			Required: true,
@@ -38,7 +43,7 @@ func publicCloudVMResourceAttributes() map[string]schema.Attribute {
 		"labels": schema.MapAttribute{
 			Optional:            true,
 			ElementType:         types.StringType,
-			MarkdownDescription: vmAttributeDescriptions["labels"],
+			MarkdownDescription: shared.LabelsDescription,
 		},
 		"uuid": schema.StringAttribute{
 			Computed:            true,
@@ -55,21 +60,18 @@ func publicCloudVMResourceAttributes() map[string]schema.Attribute {
 				stringplanmodifier.RequiresReplace(),
 			},
 		},
-		"status_state": schema.StringAttribute{
+		"status": schema.SingleNestedAttribute{
 			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_state"],
-		},
-		"status_operation": schema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_operation"],
-		},
-		"status_info": schema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_info"],
+			MarkdownDescription: vmAttributeDescriptions["status"],
+			Attributes: map[string]schema.Attribute{
+				"state":     schema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["state"]},
+				"operation": schema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["operation"]},
+				"info":      schema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["info"]},
+			},
 		},
 		"updated_at": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.",
+			MarkdownDescription: shared.UpdatedAtDescription,
 		},
 	}
 }
@@ -95,19 +97,16 @@ func publicCloudVMViewAttributes() map[string]dataschema.Attribute {
 		"labels": dataschema.MapAttribute{
 			Computed:            true,
 			ElementType:         types.StringType,
-			MarkdownDescription: vmAttributeDescriptions["labels"],
+			MarkdownDescription: shared.LabelsDescription,
 		},
-		"status_state": dataschema.StringAttribute{
+		"status": dataschema.SingleNestedAttribute{
 			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_state"],
-		},
-		"status_operation": dataschema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_operation"],
-		},
-		"status_info": dataschema.StringAttribute{
-			Computed:            true,
-			MarkdownDescription: vmAttributeDescriptions["status_info"],
+			MarkdownDescription: vmAttributeDescriptions["status"],
+			Attributes: map[string]dataschema.Attribute{
+				"state":     dataschema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["state"]},
+				"operation": dataschema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["operation"]},
+				"info":      dataschema.StringAttribute{Computed: true, MarkdownDescription: statusDescriptions["info"]},
+			},
 		},
 	}
 }
@@ -132,7 +131,7 @@ func publicCloudVMDataSourceAttributes() map[string]dataschema.Attribute {
 	}
 	attrs["updated_at"] = dataschema.StringAttribute{
 		Computed:            true,
-		MarkdownDescription: "Server-side last-modified timestamp (RFC 3339).",
+		MarkdownDescription: shared.UpdatedAtDescription,
 	}
 
 	return attrs

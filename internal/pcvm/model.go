@@ -1,6 +1,7 @@
-package publiccloudvm
+package pcvm
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -8,13 +9,18 @@ import (
 // cloud VM shares: the items of the fco_public_cloud_vms list data source and
 // the core of publicCloudVMModel.
 type publicCloudVMView struct {
-	UUID            types.String `tfsdk:"uuid"`
-	Name            types.String `tfsdk:"name"`
-	Size            types.String `tfsdk:"size"`
-	Labels          types.Map    `tfsdk:"labels"`
-	StatusState     types.String `tfsdk:"status_state"`
-	StatusOperation types.String `tfsdk:"status_operation"`
-	StatusInfo      types.String `tfsdk:"status_info"`
+	UUID   types.String `tfsdk:"uuid"`
+	Name   types.String `tfsdk:"name"`
+	Size   types.String `tfsdk:"size"`
+	Labels types.Map    `tfsdk:"labels"`
+	Status types.Object `tfsdk:"status"`
+}
+
+// statusAttrTypes describes the nested status object.
+var statusAttrTypes = map[string]attr.Type{
+	"state":     types.StringType,
+	"operation": types.StringType,
+	"info":      types.StringType,
 }
 
 // publicCloudVMModel describes the Terraform state for the fco_public_cloud_vm

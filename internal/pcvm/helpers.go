@@ -1,4 +1,4 @@
-package publiccloudvm
+package pcvm
 
 import (
 	"context"
@@ -200,20 +200,20 @@ func parseUpdatedAt(s string) (*timestamppb.Timestamp, error) {
 
 // publicCloudVMViewFromAPI maps an API VM to its shared read-only view.
 func publicCloudVMViewFromAPI(vm *pcvmv1.PublicCloudVM) publicCloudVMView {
-	var statusState, statusOp, statusInfo string
+	status := types.ObjectNull(statusAttrTypes)
 	if vm.Status != nil {
-		statusState = stateToString(vm.Status.State)
-		statusOp = operationToString(vm.Status.Operation)
-		statusInfo = vm.Status.Info
+		status, _ = types.ObjectValue(statusAttrTypes, map[string]attr.Value{
+			"state":     types.StringValue(stateToString(vm.Status.State)),
+			"operation": types.StringValue(operationToString(vm.Status.Operation)),
+			"info":      types.StringValue(vm.Status.Info),
+		})
 	}
 	return publicCloudVMView{
-		UUID:            types.StringValue(vm.Uuid),
-		Name:            types.StringValue(vm.Name),
-		Size:            types.StringValue(sizeToString(vm.Size)),
-		Labels:          labelsFromAPI(vm.GetMeta().GetLabels()),
-		StatusState:     types.StringValue(statusState),
-		StatusOperation: types.StringValue(statusOp),
-		StatusInfo:      types.StringValue(statusInfo),
+		UUID:   types.StringValue(vm.Uuid),
+		Name:   types.StringValue(vm.Name),
+		Size:   types.StringValue(sizeToString(vm.Size)),
+		Labels: labelsFromAPI(vm.GetMeta().GetLabels()),
+		Status: status,
 	}
 }
 

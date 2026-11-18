@@ -11,9 +11,7 @@ import (
 // Debug enables verbose provider logging.
 var Debug bool
 
-// SessionFrom extracts the *session.Session from the provider data. A nil
-// provider data is not an error; it means the provider has not been
-// configured yet.
+// SessionFrom extracts the *session.Session from the provider data.
 func SessionFrom(providerData any) (*session.Session, diag.Diagnostic) {
 	if providerData == nil {
 		return nil, nil

@@ -3,14 +3,14 @@
 page_title: "fco_public_cloud_vm Resource - fco"
 subcategory: ""
 description: |-
-  Manages a public cloud VM on the fi-ts.io platform.
+  Manages a public cloud VM on the fits.cloud platform.
   Only name and size can be changed after creation. size can only be upgraded (the new size must be greater than or equal to the current size); downgrades are rejected.
   The updated_at attribute is managed automatically by the provider and is used for optimistic locking (CLIENT strategy). Can be imported as <project_uuid>/<uuid>.
 ---
 
 # fco_public_cloud_vm (Resource)
 
-Manages a public cloud VM on the fi-ts.io platform.
+Manages a public cloud VM on the fits.cloud platform.
 
 Only `name` and `size` can be changed after creation. `size` can only be upgraded (the new size must be greater than or equal to the current size); downgrades are rejected.
 
@@ -40,7 +40,7 @@ output "vm_uuid" {
 }
 
 output "vm_status" {
-  value = fco_public_cloud_vm.my_vm.status_operation
+  value = fco_public_cloud_vm.my_vm.status.operation
 }
 ```
 
@@ -49,19 +49,26 @@ output "vm_status" {
 
 ### Required
 
-- `name` (String) The name of the public cloud VM. Must be between 2 and 128 characters.
+- `name` (String) The name of the public cloud VM.
 - `project_uuid` (String) The UUID of the project the public cloud VM belongs to. Changing it destroys and recreates the public cloud VM.
 - `size` (String) The size of the public cloud VM. Must be one of `small`, `medium` or `large`. Only upgrades (new size >= current size) are allowed; downgrades are rejected.
 
 ### Optional
 
-- `labels` (Map of String) A set of key/value label pairs assigned to the public cloud VM.
+- `labels` (Map of String) A set of key/value label pairs assigned to the resource.
 
 ### Read-Only
 
-- `status_info` (String) Free-text details about the current status of the public cloud VM.
-- `status_operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.
-- `status_state` (String) The health state of the public cloud VM: `healthy`, `warning` or `error`.
+- `status` (Attributes) The status of the public cloud VM. (see [below for nested schema](#nestedatt--status))
 - `tenant` (String) The tenant the public cloud VM belongs to.
 - `updated_at` (String) Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.
 - `uuid` (String) The unique identifier (UUID) of the public cloud VM.
+
+<a id="nestedatt--status"></a>
+### Nested Schema for `status`
+
+Read-Only:
+
+- `info` (String) Free-text details about the current status of the public cloud VM.
+- `operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.
+- `state` (String) The health state of the public cloud VM: `healthy`, `warning` or `error`.

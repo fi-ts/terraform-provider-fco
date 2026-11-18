@@ -1,4 +1,4 @@
-package publiccloudvm_test
+package pcvm_test
 
 import (
 	"fmt"
@@ -43,7 +43,7 @@ func TestAccPublicCloudVM(t *testing.T) {
 					resource.TestCheckResourceAttr("fco_public_cloud_vm.test", "name", name),
 					resource.TestCheckResourceAttr("fco_public_cloud_vm.test", "size", "small"),
 					resource.TestCheckResourceAttrSet("fco_public_cloud_vm.test", "uuid"),
-					resource.TestCheckResourceAttr("fco_public_cloud_vm.test", "status_operation", "active"),
+					resource.TestCheckResourceAttr("fco_public_cloud_vm.test", "status.operation", "active"),
 				),
 			},
 			// Import + re-read — verifies Read is idempotent and import works.

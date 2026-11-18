@@ -1,6 +1,7 @@
 package project
 
 import (
+	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 	dataschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -14,7 +15,6 @@ import (
 var projectAttributeDescriptions = map[string]string{
 	"name":        "The name of the project.The name is immutable; changing it destroys and recreates the project.",
 	"description": "A free-text description of the project.",
-	"labels":      "A set of key/value label pairs assigned to the project.",
 	"tenant":      "The tenant the project belongs to.",
 	"created_at":  "The timestamp (RFC 3339) when the project was created.",
 }
@@ -35,7 +35,7 @@ func projectResourceAttributes() map[string]schema.Attribute {
 		"labels": schema.MapAttribute{
 			Optional:            true,
 			ElementType:         types.StringType,
-			MarkdownDescription: projectAttributeDescriptions["labels"],
+			MarkdownDescription: shared.LabelsDescription,
 		},
 		"uuid": schema.StringAttribute{
 			Computed:            true,
@@ -51,7 +51,7 @@ func projectResourceAttributes() map[string]schema.Attribute {
 		},
 		"updated_at": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.",
+			MarkdownDescription: shared.UpdatedAtDescription,
 		},
 	}
 }
@@ -77,7 +77,7 @@ func projectViewAttributes() map[string]dataschema.Attribute {
 		"labels": dataschema.MapAttribute{
 			Computed:            true,
 			ElementType:         types.StringType,
-			MarkdownDescription: projectAttributeDescriptions["labels"],
+			MarkdownDescription: shared.LabelsDescription,
 		},
 		"tenant": dataschema.StringAttribute{
 			Computed:            true,
@@ -89,7 +89,7 @@ func projectViewAttributes() map[string]dataschema.Attribute {
 		},
 		"updated_at": dataschema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Server-side last-modified timestamp (RFC 3339).",
+			MarkdownDescription: shared.UpdatedAtDescription,
 		},
 	}
 }

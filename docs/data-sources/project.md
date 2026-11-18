@@ -34,7 +34,7 @@ output "project" {
 
 - `created_at` (String) The timestamp (RFC 3339) when the project was created.
 - `description` (String) A free-text description of the project.
-- `labels` (Map of String) A set of key/value label pairs assigned to the project.
+- `labels` (Map of String) A set of key/value label pairs assigned to the resource.
 - `name` (String) The name of the project.The name is immutable; changing it destroys and recreates the project.
 - `tenant` (String) The tenant the project belongs to.
-- `updated_at` (String) Server-side last-modified timestamp (RFC 3339).
+- `updated_at` (String) Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.

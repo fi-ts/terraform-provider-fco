@@ -30,11 +30,18 @@ data "fco_public_cloud_vm" "by_uuid" {
 
 ### Read-Only
 
-- `labels` (Map of String) A set of key/value label pairs assigned to the public cloud VM.
+- `labels` (Map of String) A set of key/value label pairs assigned to the resource.
 - `name` (String) The name of the public cloud VM.
 - `size` (String) The size of the public cloud VM.
-- `status_info` (String) Free-text details about the current status of the public cloud VM.
-- `status_operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.
-- `status_state` (String) The health state of the public cloud VM: `healthy`, `warning` or `error`.
+- `status` (Attributes) The status of the public cloud VM. (see [below for nested schema](#nestedatt--status))
 - `tenant` (String) The tenant the public cloud VM belongs to.
-- `updated_at` (String) Server-side last-modified timestamp (RFC 3339).
+- `updated_at` (String) Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.
+
+<a id="nestedatt--status"></a>
+### Nested Schema for `status`
+
+Read-Only:
+
+- `info` (String) Free-text details about the current status of the public cloud VM.
+- `operation` (String) The current operation of the public cloud VM: `creating`, `active`, `updating`, `deleted` or `error`.
+- `state` (String) The health state of the public cloud VM: `healthy`, `warning` or `error`.

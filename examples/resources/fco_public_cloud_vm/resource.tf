@@ -19,5 +19,5 @@ output "vm_uuid" {
 }
 
 output "vm_status" {
-  value = fco_public_cloud_vm.my_vm.status_operation
+  value = fco_public_cloud_vm.my_vm.status.operation
 }

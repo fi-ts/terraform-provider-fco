@@ -1,4 +1,4 @@
-package publiccloudvm
+package pcvm
 
 import (
 	"context"
@@ -50,7 +50,7 @@ func (*PublicCloudVMResource) Metadata(_ context.Context, req resource.MetadataR
 // Schema implements resource.Resource.
 func (*PublicCloudVMResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a public cloud VM on the fi-ts.io platform.\n\n" +
+		MarkdownDescription: "Manages a public cloud VM on the fits.cloud platform.\n\n" +
 			"Only `name` and `size` can be changed after creation. `size` can only be upgraded " +
 			"(the new size must be greater than or equal to the current size); downgrades are rejected.\n\n" +
 			"The `updated_at` attribute is managed automatically by the provider and is used for " +

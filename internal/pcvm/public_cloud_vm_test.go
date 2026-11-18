@@ -1,4 +1,4 @@
-package publiccloudvm
+package pcvm
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -140,9 +141,9 @@ func TestPublicCloudVMFromAPI(t *testing.T) {
 	assert.Equal(t, "medium", m.Size.ValueString())
 	assert.Equal(t, "tenant-abc", m.Tenant.ValueString())
 	assert.Equal(t, "99999999-8888-7777-6666-555555555555", m.ProjectUUID.ValueString())
-	assert.Equal(t, "healthy", m.StatusState.ValueString())
-	assert.Equal(t, "active", m.StatusOperation.ValueString())
-	assert.Equal(t, "all good", m.StatusInfo.ValueString())
+	assert.Equal(t, "healthy", statusAttr(t, m.Status, "state"))
+	assert.Equal(t, "active", statusAttr(t, m.Status, "operation"))
+	assert.Equal(t, "all good", statusAttr(t, m.Status, "info"))
 	assert.False(t, m.Labels.IsNull())
 	var labelElems map[string]string
 	assert.False(t, m.Labels.ElementsAs(context.Background(), &labelElems, false).HasError())
@@ -157,12 +158,18 @@ func TestPublicCloudVMFromAPINilStatus(t *testing.T) {
 		Size: pcvmv1.Size_SIZE_SMALL,
 	}
 	m := publicCloudVMFromAPI(vm)
-	assert.Equal(t, "", m.StatusState.ValueString())
-	assert.Equal(t, "", m.StatusOperation.ValueString())
-	assert.Equal(t, "", m.StatusInfo.ValueString())
+	assert.True(t, m.Status.IsNull())
 	// nil Meta -> null labels, empty updated_at.
 	assert.True(t, m.Labels.IsNull())
 	assert.Equal(t, "", m.UpdatedAt.ValueString())
+}
+
+// statusAttr returns the string value of a nested status attribute.
+func statusAttr(t *testing.T, status types.Object, key string) string {
+	t.Helper()
+	v, ok := status.Attributes()[key].(types.String)
+	require.True(t, ok, "status.%s is not a string", key)
+	return v.ValueString()
 }
 
 func mapValue(t *testing.T, m map[string]string) types.Map {
