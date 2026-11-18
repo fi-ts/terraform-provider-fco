@@ -7,7 +7,6 @@ import (
 
 	pcvmv1 "github.com/fi-ts/api/go/fits/api/pcvm/v1"
 	apiv1 "github.com/fi-ts/api/go/fits/api/v1"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,54 +69,6 @@ func TestIsSizeDowngrade(t *testing.T) {
 	assert.False(t, isSizeDowngrade(pcvmv1.Size_SIZE_LARGE, pcvmv1.Size_SIZE_LARGE))
 }
 
-func TestLabelsToAPI(t *testing.T) {
-	// Null map -> nil.
-	assert.Nil(t, labelsToAPI(types.MapNull(types.StringType)))
-	// Unknown map -> nil.
-	assert.Nil(t, labelsToAPI(types.MapUnknown(types.StringType)))
-	// Populated map -> Labels.
-	one, _ := types.MapValue(types.StringType, map[string]attr.Value{"env": types.StringValue("prod")})
-	got := labelsToAPI(one)
-	assert.NotNil(t, got)
-	assert.Equal(t, map[string]string{"env": "prod"}, got.Labels)
-}
-
-func TestLabelsFromAPI(t *testing.T) {
-	// nil -> null.
-	assert.True(t, labelsFromAPI(nil).IsNull())
-	// empty -> null.
-	assert.True(t, labelsFromAPI(&apiv1.Labels{}).IsNull())
-	// populated -> value map.
-	got := labelsFromAPI(&apiv1.Labels{Labels: map[string]string{"a": "1"}})
-	assert.False(t, got.IsNull())
-	var gotElems map[string]string
-	assert.False(t, got.ElementsAs(context.Background(), &gotElems, false).HasError())
-	assert.Equal(t, "1", gotElems["a"])
-}
-
-func TestUpdatedAtRoundTrip(t *testing.T) {
-	now := time.Date(2024, 6, 15, 12, 30, 45, 0, time.UTC)
-	meta := &apiv1.Meta{UpdatedAt: timestamppb.New(now)}
-	formatted := updatedAtFromAPI(meta)
-	assert.NotEmpty(t, formatted)
-
-	ts, err := parseUpdatedAt(formatted)
-	assert.NoError(t, err)
-	assert.Equal(t, now.UnixNano(), ts.AsTime().UnixNano())
-}
-
-func TestUpdatedAtFromAPIEmpty(t *testing.T) {
-	assert.Equal(t, "", updatedAtFromAPI(nil))
-	assert.Equal(t, "", updatedAtFromAPI(&apiv1.Meta{}))
-}
-
-func TestParseUpdatedAtErrors(t *testing.T) {
-	_, err := parseUpdatedAt("")
-	assert.Error(t, err)
-	_, err = parseUpdatedAt("not-a-time")
-	assert.Error(t, err)
-}
-
 func TestPublicCloudVMFromAPI(t *testing.T) {
 	vm := &pcvmv1.PublicCloudVM{
 		Uuid:        "11111111-2222-3333-4444-555555555555",
@@ -170,53 +121,4 @@ func statusAttr(t *testing.T, status types.Object, key string) string {
 	v, ok := status.Attributes()[key].(types.String)
 	require.True(t, ok, "status.%s is not a string", key)
 	return v.ValueString()
-}
-
-func mapValue(t *testing.T, m map[string]string) types.Map {
-	t.Helper()
-	elems := make(map[string]attr.Value, len(m))
-	for k, v := range m {
-		elems[k] = types.StringValue(v)
-	}
-	got, diags := types.MapValue(types.StringType, elems)
-	if diags.HasError() {
-		t.Fatalf("building map value: %v", diags)
-	}
-	return got
-}
-
-func TestLabelsToMap(t *testing.T) {
-	assert.Equal(t, map[string]string{}, labelsToMap(types.MapNull(types.StringType)))
-	assert.Equal(t, map[string]string{}, labelsToMap(types.MapUnknown(types.StringType)))
-	assert.Equal(t, map[string]string{"a": "1"}, labelsToMap(mapValue(t, map[string]string{"a": "1"})))
-}
-
-func TestLabelsDelta(t *testing.T) {
-	// No change -> nil (nothing to do).
-	assert.Nil(t, labelsDelta(types.MapNull(types.StringType), types.MapNull(types.StringType)))
-	assert.Nil(t, labelsDelta(mapValue(t, map[string]string{"a": "1"}), mapValue(t, map[string]string{"a": "1"})))
-
-	// Add only.
-	add := labelsDelta(types.MapNull(types.StringType), mapValue(t, map[string]string{"a": "1"}))
-	assert.NotNil(t, add)
-	assert.Equal(t, map[string]string{"a": "1"}, add.Update.Labels)
-	assert.Empty(t, add.Remove)
-
-	// Remove only: state has a label the plan drops.
-	rem := labelsDelta(mapValue(t, map[string]string{"a": "1", "b": "2"}), mapValue(t, map[string]string{"b": "2"}))
-	assert.NotNil(t, rem)
-	assert.Nil(t, rem.Update)
-	assert.Equal(t, []string{"a"}, rem.Remove)
-
-	// Add + overwrite + remove.
-	both := labelsDelta(mapValue(t, map[string]string{"a": "1", "c": "3"}), mapValue(t, map[string]string{"a": "1", "b": "2", "d": "4"}))
-	assert.NotNil(t, both)
-	assert.Equal(t, map[string]string{"b": "2", "d": "4"}, both.Update.Labels)
-	assert.Equal(t, []string{"c"}, both.Remove)
-
-	// Plan null clears all state labels.
-	clearAll := labelsDelta(mapValue(t, map[string]string{"a": "1", "b": "2"}), types.MapNull(types.StringType))
-	assert.NotNil(t, clearAll)
-	assert.Nil(t, clearAll.Update)
-	assert.ElementsMatch(t, []string{"a", "b"}, clearAll.Remove)
 }

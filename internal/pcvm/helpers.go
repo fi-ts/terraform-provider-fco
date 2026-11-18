@@ -1,17 +1,12 @@
 package pcvm
 
 import (
-	"context"
-	"fmt"
-	"time"
-
 	pcvmv1 "github.com/fi-ts/api/go/fits/api/pcvm/v1"
-	apiv1 "github.com/fi-ts/api/go/fits/api/v1"
+	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Terraform attribute values for the size attribute.
@@ -103,101 +98,6 @@ func operationToString(op pcvmv1.Operation) string {
 	}
 }
 
-// labelsToAPI converts a Terraform labels map (or null/unknown) to the API Labels message.
-// A null/unknown/empty map yields a nil Labels (no labels are set on the entity).
-func labelsToAPI(m types.Map) *apiv1.Labels {
-	if m.IsNull() || m.IsUnknown() {
-		return nil
-	}
-	var elems map[string]string
-	if diags := m.ElementsAs(context.Background(), &elems, false); diags.HasError() || len(elems) == 0 {
-		return nil
-	}
-	return &apiv1.Labels{Labels: elems}
-}
-
-// labelsFromAPI converts an API Labels message (possibly nil) to a Terraform map.
-// A nil/empty message maps to a null map.
-func labelsFromAPI(l *apiv1.Labels) types.Map {
-	if l == nil || len(l.Labels) == 0 {
-		return types.MapNull(types.StringType)
-	}
-	elems := make(map[string]attr.Value, len(l.Labels))
-	for k, v := range l.Labels {
-		elems[k] = types.StringValue(v)
-	}
-	m, _ := types.MapValue(types.StringType, elems)
-	return m
-}
-
-// labelsToMap returns the string map held by m, or an empty map when m is null
-// or unknown. It swallows element errors, returning the empty map, so callers
-// can rely on a usable map for diffing.
-func labelsToMap(m types.Map) map[string]string {
-	out := map[string]string{}
-	if m.IsNull() || m.IsUnknown() {
-		return out
-	}
-	if diags := m.ElementsAs(context.Background(), &out, false); diags.HasError() {
-		return map[string]string{}
-	}
-	return out
-}
-
-// labelsDelta returns the update/remove diff needed to make stateLabels
-// match planLabels (null/unknown count as empty), or nil when nothing
-// changes.
-func labelsDelta(stateLabels, planLabels types.Map) *apiv1.UpdateLabels {
-	current := labelsToMap(stateLabels)
-	desired := labelsToMap(planLabels)
-
-	update := map[string]string{}
-	remove := []string{}
-	for k, v := range desired {
-		if cur, ok := current[k]; !ok || cur != v {
-			update[k] = v
-		}
-	}
-	for k := range current {
-		if _, ok := desired[k]; !ok {
-			remove = append(remove, k)
-		}
-	}
-
-	if len(update) == 0 && len(remove) == 0 {
-		return nil
-	}
-
-	res := &apiv1.UpdateLabels{}
-	if len(update) > 0 {
-		res.Update = &apiv1.Labels{Labels: update}
-	}
-	if len(remove) > 0 {
-		res.Remove = remove
-	}
-	return res
-}
-
-// updatedAtFromAPI formats the API meta.updated_at timestamp as RFC 3339 Nano.
-func updatedAtFromAPI(meta *apiv1.Meta) string {
-	if meta == nil || meta.UpdatedAt == nil {
-		return ""
-	}
-	return meta.UpdatedAt.AsTime().Format(time.RFC3339Nano)
-}
-
-// parseUpdatedAt parses an RFC 3339 / RFC 3339 Nano timestamp back into a protobuf Timestamp.
-func parseUpdatedAt(s string) (*timestamppb.Timestamp, error) {
-	if s == "" {
-		return nil, fmt.Errorf("no updated_at timestamp available for optimistic locking")
-	}
-	t, err := time.Parse(time.RFC3339Nano, s)
-	if err != nil {
-		return nil, fmt.Errorf("parse updated_at %q: %w", s, err)
-	}
-	return timestamppb.New(t), nil
-}
-
 // publicCloudVMViewFromAPI maps an API VM to its shared read-only view.
 func publicCloudVMViewFromAPI(vm *pcvmv1.PublicCloudVM) publicCloudVMView {
 	status := types.ObjectNull(statusAttrTypes)
@@ -212,7 +112,7 @@ func publicCloudVMViewFromAPI(vm *pcvmv1.PublicCloudVM) publicCloudVMView {
 		UUID:   types.StringValue(vm.Uuid),
 		Name:   types.StringValue(vm.Name),
 		Size:   types.StringValue(sizeToString(vm.Size)),
-		Labels: labelsFromAPI(vm.GetMeta().GetLabels()),
+		Labels: shared.LabelsFromAPI(vm.GetMeta().GetLabels()),
 		Status: status,
 	}
 }
@@ -223,6 +123,6 @@ func publicCloudVMFromAPI(vm *pcvmv1.PublicCloudVM) publicCloudVMModel {
 		publicCloudVMView: publicCloudVMViewFromAPI(vm),
 		Tenant:            types.StringValue(vm.Tenant),
 		ProjectUUID:       types.StringValue(vm.ProjectUuid),
-		UpdatedAt:         types.StringValue(updatedAtFromAPI(vm.GetMeta())),
+		UpdatedAt:         types.StringValue(shared.TimestampFromAPI(vm.GetMeta().GetUpdatedAt())),
 	}
 }

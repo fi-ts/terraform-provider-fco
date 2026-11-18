@@ -90,7 +90,7 @@ func (r *PublicCloudVMResource) Create(ctx context.Context, req resource.CreateR
 	createReq := &pcvmv1.PublicCloudVMServiceCreateRequest{
 		ProjectUuid: plan.ProjectUUID.ValueString(),
 		Name:        plan.Name.ValueString(),
-		Labels:      labelsToAPI(plan.Labels),
+		Labels:      shared.LabelsToAPI(plan.Labels),
 		Size:        size,
 	}
 
@@ -149,7 +149,7 @@ func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	updateMeta, err := parseUpdatedAt(state.UpdatedAt.ValueString())
+	updateMeta, err := shared.ParseUpdatedAt(state.UpdatedAt.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Missing updated_at",
@@ -173,7 +173,7 @@ func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateR
 		reqMsg.Name = &name
 	}
 
-	if delta := labelsDelta(state.Labels, plan.Labels); delta != nil {
+	if delta := shared.LabelsDelta(state.Labels, plan.Labels); delta != nil {
 		reqMsg.Labels = delta
 	}
 
