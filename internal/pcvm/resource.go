@@ -11,16 +11,19 @@ import (
 	apiv1 "github.com/fi-ts/api/go/fits/api/v1"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// Poll configuration for waiting on asynchronous VM operations.
+// Poll configuration for waiting on asynchronous VM operations. The timeouts
+// are defaults and can be overridden via the `timeouts` block.
 const (
-	pollTimeout  = 20 * time.Minute
-	pollInterval = 5 * time.Second
+	defaultCreateTimeout = 20 * time.Minute
+	defaultUpdateTimeout = 20 * time.Minute
+	pollInterval         = 5 * time.Second
 
 	// operationActive is the terminal operation we wait for after Create/Update.
 	operationActive = "active"
@@ -48,7 +51,7 @@ func (*PublicCloudVMResource) Metadata(_ context.Context, req resource.MetadataR
 }
 
 // Schema implements resource.Resource.
-func (*PublicCloudVMResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*PublicCloudVMResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a public cloud VM on the fits.cloud platform.\n\n" +
 			"Only `name` and `size` can be changed after creation. `size` can only be upgraded " +
@@ -56,6 +59,9 @@ func (*PublicCloudVMResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"The `updated_at` attribute is managed automatically by the provider and is used for " +
 			"optimistic locking (CLIENT strategy). Can be imported as `<project_uuid>/<uuid>`.",
 		Attributes: publicCloudVMResourceAttributes(),
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{Create: true, Update: true}),
+		},
 	}
 }
 
@@ -71,8 +77,14 @@ func (r *PublicCloudVMResource) Configure(_ context.Context, req resource.Config
 
 // Create implements resource.Resource.
 func (r *PublicCloudVMResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan publicCloudVMModel
+	var plan publicCloudVMResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, defaultCreateTimeout)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -100,20 +112,34 @@ func (r *PublicCloudVMResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	// Persist the VM once it is active: the create response only carries the
+	// Persist the VM right away so Terraform tracks it even if waiting fails
+	// (timeout, error state, cancellation). The resource is then tainted
+	// instead of orphaned.
+	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMResourceModel{
+		publicCloudVMModel: publicCloudVMFromAPI(created.Vm),
+		Timeouts:           plan.Timeouts,
+	})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Then wait until the VM is active: the create response only carries the
 	// transient "creating" status.
-	activeVM, err := r.waitForActive(ctx, plan.ProjectUUID.ValueString(), created.Vm.GetUuid())
+	activeVM, err := r.waitForActive(ctx, plan.ProjectUUID.ValueString(), created.Vm.GetUuid(), createTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create public cloud VM", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMFromAPI(activeVM))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMResourceModel{
+		publicCloudVMModel: publicCloudVMFromAPI(activeVM),
+		Timeouts:           plan.Timeouts,
+	})...)
 }
 
 // Read implements resource.Resource.
 func (r *PublicCloudVMResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state publicCloudVMModel
+	var state publicCloudVMResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -132,19 +158,28 @@ func (r *PublicCloudVMResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMFromAPI(vm))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMResourceModel{
+		publicCloudVMModel: publicCloudVMFromAPI(vm),
+		Timeouts:           state.Timeouts,
+	})...)
 }
 
 // Update implements resource.Resource.
 func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state publicCloudVMModel
+	var state publicCloudVMResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var plan publicCloudVMModel
+	var plan publicCloudVMResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, defaultUpdateTimeout)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -212,20 +247,33 @@ func (r *PublicCloudVMResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// Persist the VM once it is active: the update response only carries the
+	// Persist the updated VM right away (fresh updated_at for optimistic
+	// locking) so state stays correct even if waiting fails.
+	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMResourceModel{
+		publicCloudVMModel: publicCloudVMFromAPI(updated.Vm),
+		Timeouts:           plan.Timeouts,
+	})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Then wait until the VM is active: the update response only carries the
 	// transient "updating" status.
-	activeVM, err := r.waitForActive(ctx, state.ProjectUUID.ValueString(), updated.Vm.GetUuid())
+	activeVM, err := r.waitForActive(ctx, state.ProjectUUID.ValueString(), updated.Vm.GetUuid(), updateTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update public cloud VM", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMFromAPI(activeVM))...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, publicCloudVMResourceModel{
+		publicCloudVMModel: publicCloudVMFromAPI(activeVM),
+		Timeouts:           plan.Timeouts,
+	})...)
 }
 
 // Delete implements resource.Resource.
 func (r *PublicCloudVMResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state publicCloudVMModel
+	var state publicCloudVMResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -271,8 +319,8 @@ func (r *PublicCloudVMResource) getVM(ctx context.Context, projectUUID, uuid str
 // an error is observed, or the deadline is reached. It returns the active VM
 // so callers can persist the terminal status and includes the last
 // status.info in any returned error.
-func (r *PublicCloudVMResource) waitForActive(ctx context.Context, projectUUID, uuid string) (*pcvmv1.PublicCloudVM, error) {
-	ctx, cancel := context.WithTimeout(ctx, pollTimeout)
+func (r *PublicCloudVMResource) waitForActive(ctx context.Context, projectUUID, uuid string, timeout time.Duration) (*pcvmv1.PublicCloudVM, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	lastInfo := ""

@@ -1,6 +1,7 @@
 package pcvm
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -31,6 +32,14 @@ type publicCloudVMModel struct {
 	Tenant      types.String `tfsdk:"tenant"`
 	ProjectUUID types.String `tfsdk:"project_uuid"`
 	UpdatedAt   types.String `tfsdk:"updated_at"`
+}
+
+// publicCloudVMResourceModel is the state of the fco_public_cloud_vm resource:
+// the shared model plus the resource-only timeouts block.
+type publicCloudVMResourceModel struct {
+	publicCloudVMModel
+
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 // listPublicCloudVMModel describes the Terraform state for the

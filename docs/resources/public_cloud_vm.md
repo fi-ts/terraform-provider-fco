@@ -56,6 +56,7 @@ output "vm_status" {
 ### Optional
 
 - `labels` (Map of String) A set of key/value label pairs assigned to the resource.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
@@ -63,6 +64,15 @@ output "vm_status" {
 - `tenant` (String) The tenant the public cloud VM belongs to.
 - `updated_at` (String) Server-side last-modified timestamp (RFC 3339). Managed automatically for optimistic locking.
 - `uuid` (String) The unique identifier (UUID) of the public cloud VM.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--status"></a>
 ### Nested Schema for `status`
