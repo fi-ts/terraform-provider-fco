@@ -71,13 +71,7 @@ func (d *OperatingSystemsDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 	oses := r.GetOperatingSystems()
-	data.OperatingSystems = make([]operatingSystemView, 0, len(oses))
-	ids := make([]string, 0, len(oses))
-	for _, os := range oses {
-		data.OperatingSystems = append(data.OperatingSystems, operatingSystemViewFromAPI(os))
-		ids = append(ids, os.GetUuid())
-	}
-	data.ID = shared.ListID(ids)
+	data.OperatingSystems, data.ID = shared.ListViews(oses, operatingSystemViewFromAPI)
 	tflog.Trace(ctx, "read operating systems", map[string]any{"count": len(oses)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

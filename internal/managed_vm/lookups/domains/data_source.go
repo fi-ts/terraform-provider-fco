@@ -77,13 +77,7 @@ func (d *DomainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 	domains := r.GetDomains()
-	data.Domains = make([]domainView, 0, len(domains))
-	ids := make([]string, 0, len(domains))
-	for _, domain := range domains {
-		data.Domains = append(data.Domains, domainViewFromAPI(domain))
-		ids = append(ids, domain.GetUuid())
-	}
-	data.ID = shared.ListID(ids)
+	data.Domains, data.ID = shared.ListViews(domains, domainViewFromAPI)
 	tflog.Trace(ctx, "read domains", map[string]any{"count": len(domains)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

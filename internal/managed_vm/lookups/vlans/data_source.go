@@ -83,13 +83,7 @@ func (d *VLANsDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 	vlans := r.GetVlans()
-	data.VLANs = make([]vlanView, 0, len(vlans))
-	ids := make([]string, 0, len(vlans))
-	for _, vlan := range vlans {
-		data.VLANs = append(data.VLANs, vlanViewFromAPI(vlan))
-		ids = append(ids, vlan.GetUuid())
-	}
-	data.ID = shared.ListID(ids)
+	data.VLANs, data.ID = shared.ListViews(vlans, vlanViewFromAPI)
 	tflog.Trace(ctx, "read VLANs", map[string]any{"count": len(vlans)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

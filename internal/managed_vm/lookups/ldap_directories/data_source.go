@@ -71,13 +71,7 @@ func (d *LDAPDirectoriesDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 	ldaps := r.GetLdaps()
-	data.LDAPDirectories = make([]ldapDirectoryView, 0, len(ldaps))
-	ids := make([]string, 0, len(ldaps))
-	for _, ldap := range ldaps {
-		data.LDAPDirectories = append(data.LDAPDirectories, ldapDirectoryViewFromAPI(ldap))
-		ids = append(ids, ldap.GetUuid())
-	}
-	data.ID = shared.ListID(ids)
+	data.LDAPDirectories, data.ID = shared.ListViews(ldaps, ldapDirectoryViewFromAPI)
 	tflog.Trace(ctx, "read LDAP directories", map[string]any{"count": len(ldaps)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

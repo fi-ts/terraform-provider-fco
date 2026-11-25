@@ -69,13 +69,7 @@ func (d *LocationsDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 	locations := r.GetLocations()
-	data.Locations = make([]locationView, 0, len(locations))
-	ids := make([]string, 0, len(locations))
-	for _, location := range locations {
-		data.Locations = append(data.Locations, locationViewFromAPI(location))
-		ids = append(ids, location.GetUuid())
-	}
-	data.ID = shared.ListID(ids)
+	data.Locations, data.ID = shared.ListViews(locations, locationViewFromAPI)
 	tflog.Trace(ctx, "read locations", map[string]any{"count": len(locations)})
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
