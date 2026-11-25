@@ -1,4 +1,4 @@
-package managedvm_test
+package mvm_test
 
 import (
 	"os"

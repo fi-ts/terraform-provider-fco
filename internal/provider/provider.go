@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	client "github.com/fi-ts/api/go/client"
-	managedvmdomains "github.com/fi-ts/terraform-provider-fco/internal/managed_vm/lookups/domains"
-	managedvmldap "github.com/fi-ts/terraform-provider-fco/internal/managed_vm/lookups/ldap_directories"
-	managedvmlocations "github.com/fi-ts/terraform-provider-fco/internal/managed_vm/lookups/locations"
-	managedvmos "github.com/fi-ts/terraform-provider-fco/internal/managed_vm/lookups/operating_systems"
-	managedvmvlans "github.com/fi-ts/terraform-provider-fco/internal/managed_vm/lookups/vlans"
+	mvmdomains "github.com/fi-ts/terraform-provider-fco/internal/mvm/lookups/domains"
+	mvmldap "github.com/fi-ts/terraform-provider-fco/internal/mvm/lookups/ldap_directories"
+	mvmlocations "github.com/fi-ts/terraform-provider-fco/internal/mvm/lookups/locations"
+	mvmos "github.com/fi-ts/terraform-provider-fco/internal/mvm/lookups/operating_systems"
+	mvmvlans "github.com/fi-ts/terraform-provider-fco/internal/mvm/lookups/vlans"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 )
@@ -175,11 +175,11 @@ func (p *FCOProvider) Resources(_ context.Context) []func() resource.Resource {
 
 func (p *FCOProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		managedvmos.NewOperatingSystemsDataSource,
-		managedvmlocations.NewLocationsDataSource,
-		managedvmdomains.NewDomainsDataSource,
-		managedvmldap.NewLDAPDirectoriesDataSource,
-		managedvmvlans.NewVLANsDataSource,
+		mvmos.NewOperatingSystemsDataSource,
+		mvmlocations.NewLocationsDataSource,
+		mvmdomains.NewDomainsDataSource,
+		mvmldap.NewLDAPDirectoriesDataSource,
+		mvmvlans.NewVLANsDataSource,
 	}
 }
 
