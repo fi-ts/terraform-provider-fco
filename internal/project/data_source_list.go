@@ -2,16 +2,12 @@ package project
 
 import (
 	"context"
-	"crypto/sha1"
-	"fmt"
-	"strings"
 
 	apiv1 "github.com/fi-ts/api/go/fits/api/v1"
 	"github.com/fi-ts/terraform-provider-fco/internal/session"
 	"github.com/fi-ts/terraform-provider-fco/internal/shared"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -71,20 +67,12 @@ func (d *ProjectsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	listReq := &apiv1.ProjectServiceListRequest{
 		Tenant: &d.session.Tenant,
 	}
-	if !data.Name.IsNull() && data.Name.ValueString() != "" {
-		name := data.Name.ValueString()
-		listReq.Name = &name
+	name, labels, diags := shared.ListFilters(ctx, data.Name, data.Labels)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	if !data.Labels.IsNull() && !data.Labels.IsUnknown() {
-		var labels map[string]string
-		resp.Diagnostics.Append(data.Labels.ElementsAs(ctx, &labels, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		if len(labels) > 0 {
-			listReq.Labels = &apiv1.Labels{Labels: labels}
-		}
-	}
+	listReq.Name, listReq.Labels = name, labels
 
 	r, err := d.session.Client.Apiv1().Project().List(ctx, listReq)
 	if err != nil {
@@ -94,13 +82,7 @@ func (d *ProjectsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	projects := r.GetProjects()
 	tflog.Trace(ctx, "read projects", map[string]any{"count": len(projects)})
 
-	data.Projects = make([]projectView, 0, len(projects))
-	ids := make([]string, 0, len(projects))
-	for _, p := range projects {
-		data.Projects = append(data.Projects, projectViewFromAPI(p))
-		ids = append(ids, p.GetUuid())
-	}
-	data.ID = types.StringValue(fmt.Sprintf("%x", sha1.Sum([]byte(strings.Join(ids, ",")))))
+	data.Projects, data.ID = shared.ListViews(projects, projectViewFromAPI)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

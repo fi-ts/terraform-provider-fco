@@ -1,6 +1,6 @@
 # Terraform Provider for FCO
 
-Manage resources on the fi-ts.io platform using Terraform.
+Manage resources on the fits.cloud platform using Terraform.
 
 > [!IMPORTANT]
 > This provider is in **alpha** stage. The schema, API surface, and behavior

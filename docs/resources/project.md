@@ -44,7 +44,7 @@ output "project_uuid" {
 
 ### Optional
 
-- `labels` (Map of String) A set of key/value label pairs assigned to the project.
+- `labels` (Map of String) A set of key/value label pairs assigned to the resource.
 
 ### Read-Only
 

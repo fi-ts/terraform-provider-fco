@@ -76,7 +76,7 @@ func (r *ProjectResource) Create(ctx context.Context, req resource.CreateRequest
 		Tenant:      r.session.Tenant,
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
-		Labels:      labelsToAPI(plan.Labels),
+		Labels:      shared.LabelsToAPI(plan.Labels),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create project", err.Error())
@@ -131,7 +131,7 @@ func (r *ProjectResource) Update(ctx context.Context, req resource.UpdateRequest
 	lockingStrategy := apiv1.OptimisticLockingStrategy_OPTIMISTIC_LOCKING_STRATEGY_SERVER
 	var updatedAt *timestamppb.Timestamp
 	if state.UpdatedAt.ValueString() != "" {
-		ts, err := parseUpdatedAt(state.UpdatedAt.ValueString())
+		ts, err := shared.ParseUpdatedAt(state.UpdatedAt.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Invalid updated_at",
@@ -154,7 +154,7 @@ func (r *ProjectResource) Update(ctx context.Context, req resource.UpdateRequest
 		description := plan.Description.ValueString()
 		reqMsg.Description = &description
 	}
-	if delta := labelsDelta(state.Labels, plan.Labels); delta != nil {
+	if delta := shared.LabelsDelta(state.Labels, plan.Labels); delta != nil {
 		reqMsg.Labels = delta
 	}
 
